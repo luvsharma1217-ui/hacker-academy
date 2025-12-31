@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACKER UNIVERSITY | V31.0 MASTER</title>
+    <style>
+        :root { --neon: #00ff41; --bg: #050505; --panel: #111; --blue: #00aaff; --fail: #ff4444; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; user-select: none; }
+        
+        #dashboard { background: var(--panel); border-bottom: 2px solid var(--neon); padding: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; font-size: 11px; }
+        .stat-card { border: 1px solid #333; padding: 5px; text-align: center; border-radius: 4px; }
+        .stat-val { font-size: 16px; font-weight: bold; display: block; color: #fff; }
+
+        nav { display: flex; background: #000; border-bottom: 1px solid #222; }
+        nav button { flex: 1; padding: 12px; background: transparent; color: var(--neon); border: none; cursor: pointer; font-weight: bold; }
+        nav button.active { background: var(--neon); color: #000; }
+
+        .page { display: none; flex-grow: 1; overflow-y: auto; padding: 20px; }
+        .page.active { display: block; }
+
+        .quote-box { background: #111; border-left: 4px solid var(--neon); padding: 15px; margin: 15px 0; font-style: italic; color: #ccc; }
+        .parent-note { background: #001a33; border: 1px solid var(--blue); padding: 15px; margin: 15px 0; border-radius: 8px; color: #fff; font-size: 13px; }
+        .action-btn { background: var(--neon); color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        
+        .exam-mode { background: #111; border: 2px solid var(--neon); padding: 30px; text-align: center; border-radius: 10px; }
+        .fail-mode { background: #1a0000; border: 2px solid var(--fail); padding: 30px; border-radius: 10px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="dashboard">
+    <div class="stat-card">STUDENT<span class="stat-val" id="d-name">LOCKED</span></div>
+    <div class="stat-card">MONTH<span class="stat-val" id="d-months">0/14</span></div>
+    <div class="stat-card">DAILY Q<span class="stat-val" id="d-q">0/10</span></div>
+    <div class="stat-card">STATUS<span class="stat-val" id="d-status">SECURE</span></div>
+</div>
+
+<nav>
+    <button id="nav-hub" class="active" onclick="showPage('hub')">ACADEMY HUB</button>
+    <button id="nav-quiz" onclick="showPage('quiz')">STUDY LAB</button>
+</nav>
+
+<div id="page-hub" class="page active">
+    <h2 id="hub-header">WELCOME, FUTURE ANALYST</h2>
+    
+    <div class="quote-box" id="daily-quote">"Your character is your strongest firewall."</div>
+
+    <div class="parent-note">
+        <h4 style="color:var(--blue); margin-top:0;">🛡️ NOTE TO PARENTS</h4>
+        <p>This is a safe, free, and professional Cyber Security Academy. We teach ethical engineering based on the <b>OSI Model</b>.</p>
+    </div>
+
+    <div id="reg-area">
+        <input type="text" id="reg-name" placeholder="Enter Full Name..." style="padding:10px; width:250px;"><br>
+        <button class="action-btn" onclick="register()">START 14-MONTH MISSION</button>
+    </div>
+
+    <div id="welcome-msg" style="display:none">
+        <p>Current Path: <b id="path-name">Foundation</b></p>
+        <p style="font-size:12px; color:#666;">Next Milestone: 7-Month Mid-Term Exam</p>
+    </div>
+</div>
+
+<div id="page-quiz" class="page">
+    <div id="standard-quiz">
+        <h3>DAILY STUDY LAB</h3>
+        <p id="q-instruction">Complete 10 tasks to progress to the next stage.</p>
+        <button class="action-btn" onclick="answerQuestion()">SUBMIT DAILY WORK</button>
+    </div>
+    
+    <div id="special-area" style="display:none;"></div>
+</div>
+
+<script>
+    const quotes = [
+        "Hacking is about building something better.",
+        "Character is doing the right thing when no one is looking.",
+        "The best way to predict the future is to create it.",
+        "A leader is one who knows the way and shows the way.",
+        "God helps those who help others.",
+        "Education is the movement from darkness to light.",
+        "Success follows those who are disciplined."
+    ];
+
+    let state = JSON.parse(localStorage.getItem('hacker_v31')) || {
+        name: "", months: 0, qDone: 0, training: false
+    };
+
+    // Security: Anti-Inspect
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123) { alert("SECURITY: Professional Mode Active."); return false; }
+    };
+
+    function updateQuote() {
+        const day = new Date().getDate() % quotes.length;
+        document.getElementById('daily-quote').innerText = `"${quotes[day]}"`;
+    }
+
+    function register() {
+        let n = document.getElementById('reg-name').value;
+        if(n) { state.name = n; save(); }
+    }
+
+    function answerQuestion() {
+        state.qDone++;
+        if(state.training) {
+            if(state.qDone >= 5) { 
+                state.training = false; state.qDone = 0; 
+                alert("Special Training Complete! Try the Exam again.");
+                showPage('hub');
+            }
+        } else if(state.qDone >= 10) {
+            state.months++; state.qDone = 0;
+            if(state.months == 7) { startExam(false); }
+            else if(state.months == 14) { startExam(true); }
+            else { alert("Day Complete! Month " + state.months + " in progress."); }
+        }
+        save();
+    }
+
+    function startExam(isFinal) {
+        showPage('quiz');
+        document.getElementById('standard-quiz').style.display = 'none';
+        document.getElementById('special-area').style.display = 'block';
+        document.getElementById('special-area').innerHTML = `
+            <div class="exam-mode">
+                <h2>${isFinal ? 'FINAL EXAM' : 'MID-TERM EXAM'}</h2>
+                <p>30 Questions | Passing: 10 Marks</p>
+                <button class="action-btn" onclick="finishExam(${isFinal})">SUBMIT 30-MARK TEST</button>
+            </div>`;
+    }
+
+    function finishExam(isFinal) {
+        let score = Math.floor(Math.random() * 31);
+        if(score >= 10) {
+            alert("PASSED! Score: " + score + "/30. Great work Agent.");
+            document.getElementById('standard-quiz').style.display = 'block';
+            document.getElementById('special-area').style.display = 'none';
+        } else {
+            state.training = true;
+            state.qDone = 0;
+            document.getElementById('special-area').innerHTML = `
+                <div class="fail-mode">
+                    <h2>EXAM FAILED</h2>
+                    <p>Score: ${score}/30. AI Special Training Required.</p>
+                    <button class="action-btn" onclick="showPage('quiz'); document.getElementById('standard-quiz').style.display='block'; document.getElementById('special-area').style.display='none';">START TRAINING</button>
+                </div>`;
+        }
+        save();
+    }
+
+    function save() {
+        localStorage.setItem('hacker_v31', JSON.stringify(state));
+        document.getElementById('d-name').innerText = state.name || "LOCKED";
+        document.getElementById('d-months').innerText = state.months + "/14";
+        document.getElementById('d-q').innerText = state.training ? "REMEDIAL" : state.qDone + "/10";
+        document.getElementById('d-status').innerText = state.training ? "TRAINING" : "SECURE";
+        
+        if(state.name) {
+            document.getElementById('reg-area').style.display = 'none';
+            document.getElementById('welcome-msg').style.display = 'block';
+            document.getElementById('hub-header').innerText = "AGENT " + state.name.toUpperCase();
+        }
+        updateQuote();
+    }
+
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(bt => bt.classList.remove('active'));
+        document.getElementById('page-'+p).classList.add('active');
+        document.getElementById('nav-'+p).classList.add('active');
+    }
+
+    save();
+</script>
+</body>
+</html>
